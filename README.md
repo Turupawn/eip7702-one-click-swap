@@ -1,65 +1,69 @@
-By following this guide learn how to improve your Dapp's UX so the users don't have to wait for many confirmations by making use the newest Ethereum feature: EIP-7702.
+# Improve your Dapp's UX with EIP-7702
 
-By using EIP-7702 users can convert their EOAs temprary into smart contracts so they can call miltiple contracts in one single transaction or many other use cases.
+By adopting EIP-7702, the newest Ethereum feature, you can temporarily convert EOAs into smart contracts, enabling users to bundle multiple contract calls into a single transaction and eliminating long confirmation waits, partial executions and many other UX issues.
 
-EIP-7702 is now live on both Scroll Mainnet and Scroll Sepolia Testnet. This should be available soon on Ethereum Mainnet and other EVM chains.
+![EIP-7702 dapp](img/one_click_swap_webapp.png)
+_We will build a very simple implementation of an EIP-7702 enabled dApp_
 
-## How to use
+EIP-7702 is live on both Scroll Mainnet and Scroll Sepolia Testnet. Support for Ethereum Mainnet and other EVM chains is coming soon.
 
-### 1. Install the dependencies
+## Prerequisites
 
-Install foundry, we will delegate to a contract trough foundry's `cast` command on the terminal because there currently isn't a way to do it the wallets.
+* **Foundry**: We'll use `cast` to delegate our EOA to the Multicall contract.
+* **Node.js & npm** (or [nargo](https://nargo.example.com/)): Required for running a simple HTTP webserver.
+* **Wallet with message-signing support** (e.g., [Rabby Wallet](https://rabby.io/)). Note: MetaMask does not yet support EIP-7702 execution.
+
+## 1. Install dependencies
+
+### Foundry
 
 ```bash
 curl -L https://foundry.paradigm.xyz | bash
 foundryup
 ```
 
-We'll also need npm just to run our app in a simple http webserver. I recommend using nargo.
+### Node.js & npm (using nvm)
 
 ```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 nvm install 22
-# Now reload your terminal
+# Restart or reload your terminal
 ```
 
-Also, make sure you have a wallet that allows sending messages to EOAs, Metamask is not compatible. So I recommend Rabby wallet exentension.
+### Connect to Scroll Sepolia Testnet
 
-### 2. Deploy the following contact with your ERC7702 enabled account
+* RPC url: `https://scroll-public.scroll-testnet.quiknode.pro`
+* Chain ID: `534351`
+* Name: `Scroll Sepolia Testnet`
+* Symbol: `Sepolia ETH`
+* Blockscout: `https://sepolia.scrollscan.com`
 
-The following contract groups many actions into one only account. I used MakerDao's Muticall3 contract but modified so it only allows one address to execute transactions. If we didn't add this anyone could inpersonify you and steal your funds.
 
-Edit `0xYOUR_EOA_ADDRESS` with the wallet that will use it as EIP-7702 delegation and deploy it on Scroll Sepolia Testnet.
+## 2. Deploy the Multicall7702 contract
+
+This contract aggregates multiple calls in one transaction and restricts execution to its deployer. It’s adapted from MakerDAO’s [Multicall3](https://github.com/mds1/multicall3/blob/main/src/Multicall3.sol) but hardcodes the `owner` for safety.
+
+1. Edit the `owner` field in `Multicall7702.sol` to your EOA address:
+
+   ```solidity
+   address immutable public owner = 0xYOUR_EOA_ADDRESS;
+   ```
+2. Compile with Solidity `0.8.12`.
+3. Deploy on Scroll Sepolia Testnet.
 
 ```solidity
 // SPDX-License-Identifier: MIT
+// Derived from Makerdao's Multicall3
 pragma solidity 0.8.12;
 
-// An EIP7702 user can deploy and delegate this contract to aggregate multiple transaction into one, like approve and swap tokens in one tx.
-// This is based on Makerdao's Multicall3 available at https://github.com/mds1/multicall3/blob/main/src/Multicall3.sol
-// The only difference with the original work is that only the deployer can aggregate transactions.
-// THIS IS NOT AUDITED. USE IT AT YOUR OWN RISK.
-
 contract Multicall7702 {
-    // Notice we declare this as inmmutable, when delegating to a contract a new context is created without the context of all the state
-    // Only the bytecode will be delegated so this way we make sure the address is set statically, at compile time
-    // Replace YOUR_EOA_ADDRESS with the wallet you will delegate with 7702 to this contract
+    struct Call3Value { address target; bool allowFailure; uint256 value; bytes callData; }
+    struct Result { bool success; bytes returnData; }
+
     address immutable public owner = 0xYOUR_EOA_ADDRESS;
 
-    struct Call3Value {
-        address target;
-        bool allowFailure;
-        uint256 value;
-        bytes callData;
-    }
-
-    struct Result {
-        bool success;
-        bytes returnData;
-    }
-
     function aggregate3Value(Call3Value[] calldata calls) public payable returns (Result[] memory returnData) {
-        require(owner == msg.sender, "Only owner"); // Only the deployer can aggregate txs
+        require(owner == msg.sender, "Only owner");
         uint256 valAccumulator;
         uint256 length = calls.length;
         returnData = new Result[](length);
@@ -86,62 +90,67 @@ contract Multicall7702 {
 }
 ```
 
-### 3. Delegate to it
+## 3. Delegate your EOA
 
-The following command will delegate your EOA to act as the contract you just deployed. Replace `YOUR_PRIVATE_KEY` with your EOA private key and `0xYOUR_CONTRACT_ADDRESS` with the `Multicall7702` contract address you just deployed.
+Run:
 
 ```bash
-cast send --rpc-url https://scroll-public.scroll-testnet.quiknode.pro --private-key YOUR_PRIVATE_KEY  --auth 0xYOUR_CONTRACT_ADDRESS $(cast az)
+cast send \
+  --rpc-url https://scroll-public.scroll-testnet.quiknode.pro \
+  --private-key YOUR_PRIVATE_KEY \
+  --auth 0xYOUR_CONTRACT_ADDRESS $(cast az)
 ```
 
-Optionally, run the following the following to check if the delegation was successfull.
+To verify:
 
 ```bash
-cast code --rpc-url https://scroll-public.scroll-testnet.quiknode.pro 0xYOUR_EOA_ADDRESS
+cast code \
+  --rpc-url https://scroll-public.scroll-testnet.quiknode.pro \
+  0xYOUR_EOA_ADDRESS
 ```
 
-It should print something similar to this
+You should see:
 
-```bash
+```
 0xef0100YOUR_EOA_ADDRESS
 ```
 
-Which is the EIP-7702 delegation prefix `0xef0100` followed by your EOA address.
+This is the EIP-7702 delegation prefix (`0xef0100`) plus the address of the contract.
 
-### 4. Run the webapp
+## 4. Run the web app
 
-Install a simple static webserver.
+1. Install a lightweight webserver:
 
-```bash
-npm install -g lite-server
-```
+   ```bash
+   npm install -g lite-server
+   ```
+2. Start the app:
 
-Run app.
+   ```bash
+   lite-server
+   ```
+3. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-```bash
-lite-server
-```
+## 5. Try it out
 
-The app should be runnin now at `http://localhost:3000/`. Open it in your browser.
+The web app will:
 
-### 5. Try the app
+1. Mint WETH by depositing to Scroll’s WETH precompile (`0x5300000000000000000000000000000000000004`).
+2. Approve Uniswap V3 to spend your WETH.
+3. Swap WETH for GHO and credit your wallet (`0xD9692f1748aFEe00FACE2da35242417dd05a8615`).
 
-The webapp will run the following:
-1. Mint the selected amount of WETH by depositing to Scroll's `0x5300000000000000000000000000000000000004` WETH precompile
-1. Approve the newly minted WETH to the Uniswap V3 contracts
-1. Swap the WETH tokens for GHO tokens, add them to your wallet at contract address `0xD9692f1748aFEe00FACE2da35242417dd05a8615`
+Enter an amount of WETH and click `One click swap`.
 
-Input your desired amount of WETH to be swaped and click the "One Click Swap" button.
+![Boundled txs with EIP-7702](img/boundled_txs.png)
+_You can have a detailed look of what happend under the hood at [https://sepolia.scrollscan.com/](sepolia.scrollscan.com)_
 
+## Take note 📝
 
-## Take note
-
-Notice some important details of EIP-7702:
-* Delegating your EOA to a contract is not yet possible on EVM Wallets this currently has to be done through the terminal
-* Wallets should activate wallet delegation, not dApps. This is for security reasons
-* When delegating to a smart contract, make sure that it handles proper access control (Ownership) or you might lose your funds
-* When delegating to a smart contract only the instructions are "copyed" not the state, the state will be initalizated in blank
+* Wallet UIs don’t yet support EIP-7702; use `cast`.
+* For security reasons, wallet delegations will occur at wallet level, not at dApp level.
+* Always enforce access control in your delegate contract or you might lose your funds.
+* The delegated contract runs with a blank state, only bytecode is reused.
 
 ## Further reading
 
-* EIP-7702 [specification](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md)
+* [EIP-7702 specification](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md)
