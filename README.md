@@ -7,6 +7,15 @@ _We will build a very simple implementation of an EIP-7702 enabled dApp_
 
 EIP-7702 is live on both Scroll Mainnet and Scroll Sepolia Testnet. Support for Ethereum Mainnet and other EVM chains is coming soon.
 
+## Boundling transactions
+
+One of the main capabilities of EIP-7702 is allowing the users to bundle many actions into a single transaction.
+
+In this demo we will do exactly that, by showcasing how to perform a swap on Uniswap V3 by approving and swapping in a single trnsaction.
+
+![Swap on Uniswap with EIP-7702](img/eip_7702_breakdown.png)
+_In this demo, we will bundle 3 on actions on 2 different contracts into a single transaction: minting WETH, Approving the UniV3 contract and swaping the WETH for GHO tokens on Scroll Sepolia Testnet._
+
 ## Prerequisites
 
 * **Foundry**: We'll use `cast` to delegate our EOA to the Multicall contract.
@@ -38,6 +47,8 @@ nvm install 22
 * Symbol: `Sepolia ETH`
 * Blockscout: `https://sepolia.scrollscan.com`
 
+![Connect Rabby to Scroll Sepolia](img/scroll_rabby.png)
+_On this guide we will use Scroll Sepolia Testnet_
 
 ## 2. Deploy the Multicall7702 contract
 
