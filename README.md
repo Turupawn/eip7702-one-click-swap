@@ -48,7 +48,7 @@ nvm install 22
 * Blockscout: `https://sepolia.scrollscan.com`
 
 ![Connect Rabby to Scroll Sepolia](img/scroll_rabby.png)
-_On this guide we will use Scroll Sepolia Testnet_
+<br>_On this guide we will use Scroll Sepolia Testnet_
 
 ## 2. Deploy the Multicall7702 contract
 
@@ -157,7 +157,7 @@ _You can have a detailed look of what happend under the hood at [https://sepolia
 
 ## Take note 📝
 
-* Wallet UIs don’t yet support EIP-7702; use `cast`.
+* Wallet UIs don’t yet support EIP-7702, use `cast` instead.
 * For security reasons, wallet delegations will occur at wallet level, not at dApp level.
 * Always enforce access control in your delegate contract or you might lose your funds.
 * The delegated contract runs with a blank state, only bytecode is reused.
