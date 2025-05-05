@@ -11,7 +11,7 @@ EIP-7702 is live on both Scroll Mainnet and Scroll Sepolia Testnet. Support for 
 
 One of the main capabilities of EIP-7702 is allowing the users to bundle many actions into a single transaction.
 
-In this demo we will do exactly that, by showcasing how to perform a swap on Uniswap V3 by approving and swapping in a single trnsaction.
+In this demo we will do exactly that, by showcasing how to perform a swap on Uniswap V3 by approving and swapping in a single transaction.
 
 ![Swap on Uniswap with EIP-7702](img/eip_7702_breakdown.png)
 _In this demo, we will bundle 3 on actions on 2 different contracts into a single transaction: minting WETH, Approving the UniV3 contract and swaping the WETH for GHO tokens on Scroll Sepolia Testnet._
@@ -126,7 +126,7 @@ You should see:
 0xef0100YOUR_EOA_ADDRESS
 ```
 
-This is the EIP-7702 delegation prefix (`0xef0100`) plus the address of the contract.
+This is the EIP-7702 delegation prefix `0xef0100` plus the address of the contract.
 
 ## 4. Run the web app
 
@@ -146,9 +146,9 @@ This is the EIP-7702 delegation prefix (`0xef0100`) plus the address of the cont
 
 The web app will:
 
-1. Mint WETH by depositing to Scroll’s WETH precompile (`0x5300000000000000000000000000000000000004`).
+1. Mint WETH by depositing to Scroll’s WETH precompile `0x5300000000000000000000000000000000000004`.
 2. Approve Uniswap V3 to spend your WETH.
-3. Swap WETH for GHO and credit your wallet (`0xD9692f1748aFEe00FACE2da35242417dd05a8615`).
+3. Swap WETH for GHO and credit your wallet `0xD9692f1748aFEe00FACE2da35242417dd05a8615`.
 
 Enter an amount of WETH and click `One click swap`.
 
